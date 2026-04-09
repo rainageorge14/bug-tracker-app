@@ -1,13 +1,14 @@
 const express = require('express')
 const cors = require('cors')
-const Database = require('better-sqlite3')
+const sqlite3 = require('sqlite3').verbose()
+
 require('dotenv').config()
 
 const app = express()
 app.use(cors())
 app.use(express.json())
 
-const db = new Database('bugs.db')
+const db = new sqlite3.Database('bugs.db')
 
 // Create table
 db.prepare(`
