@@ -25,6 +25,7 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok' })
 })
 
+// CRUD operations implemented
 // CREATE
 app.post('/bugs', (req, res) => {
   const { title, description, fix, date } = req.body
