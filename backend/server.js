@@ -11,7 +11,7 @@ app.use(express.json())
 const db = new sqlite3.Database('bugs.db')
 
 // Create table
-db.prepare(`
+db.run(`
   CREATE TABLE IF NOT EXISTS bugs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     title TEXT,
@@ -19,7 +19,7 @@ db.prepare(`
     fix TEXT,
     date TEXT
   )
-`).run()
+`)
 
 // Health check
 app.get('/health', (req, res) => {
@@ -35,19 +35,26 @@ app.post('/bugs', (req, res) => {
     return res.status(400).json({ error: "Title is required" })
   }
 
-  const stmt = db.prepare(`
-    INSERT INTO bugs (title, description, fix, date)
-    VALUES (?, ?, ?, ?)
-  `)
-
-  const result = stmt.run(title, description, fix, date)
-  res.json({ id: result.lastInsertRowid })
+  db.run(
+    `INSERT INTO bugs (title, description, fix, date) VALUES (?, ?, ?, ?)`,
+    [title, description, fix, date],
+    function(err) {
+      if (err) {
+        return res.status(500).json({ error: err.message })
+      }
+      res.json({ id: this.lastID })
+    }
+  )
 })
 
 // READ
 app.get('/bugs', (req, res) => {
-  const bugs = db.prepare(`SELECT * FROM bugs`).all()
-  res.json(bugs)
+  db.all(`SELECT * FROM bugs`, (err, rows) => {
+    if (err) {
+      return res.status(500).json({ error: err.message })
+    }
+    res.json(rows)
+  })
 })
 
 // UPDATE
@@ -55,22 +62,32 @@ app.put('/bugs/:id', (req, res) => {
   const { id } = req.params
   const { title, description, fix, date } = req.body
 
-  db.prepare(`
-    UPDATE bugs
-    SET title=?, description=?, fix=?, date=?
-    WHERE id=?
-  `).run(title, description, fix, date, id)
-
-  res.json({ message: "Bug updated" })
+  db.run(
+    `UPDATE bugs SET title=?, description=?, fix=?, date=? WHERE id=?`,
+    [title, description, fix, date, id],
+    function(err) {
+      if (err) {
+        return res.status(500).json({ error: err.message })
+      }
+      res.json({ message: "Bug updated" })
+    }
+  )
 })
 
 // DELETE
 app.delete('/bugs/:id', (req, res) => {
   const { id } = req.params
 
-  db.prepare(`DELETE FROM bugs WHERE id=?`).run(id)
-
-  res.json({ message: "Bug deleted" })
+  db.run(
+    `DELETE FROM bugs WHERE id=?`,
+    [id],
+    function(err) {
+      if (err) {
+        return res.status(500).json({ error: err.message })
+      }
+      res.json({ message: "Bug deleted" })
+    }
+  )
 })
 
 // Start server
