@@ -1,4 +1,4 @@
-const BACKEND_URL = "http://localhost:3000"
+const BACKEND_URL = "https://bug-tracker-app-n2fd.onrender.com"
 
 
 async function addBug() {
